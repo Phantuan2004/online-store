@@ -79,14 +79,20 @@ class ProductController extends Controller
 
             if ($request->has('variants')) {
                 foreach ($request->validated('variants') as $variantData) {
-                    if (isset($variantData['id'])) {
-                        $variant = $product->variants()->findOrFail($variantData['id']);
+                    // 1. Cố gắng tìm biến thể theo ID (nếu có) hoặc tìm theo SKU (vì SKU là duy nhất)
+                    $variant = $product->variants()
+                        ->where('id', $variantData['id'] ?? null)
+                        ->orWhere('sku', $variantData['sku'])
+                        ->first();
+                    if ($variant) {
+                        // 2. Nếu tìm thấy thì Cập nhật
                         $variant->update([
                             'sku' => $variantData['sku'],
                             'price' => $variantData['price'],
                             'stock' => $variantData['stock'],
                         ]);
                     } else {
+                        // 3. Nếu thực sự không có ID lẫn SKU này thì mới Tạo mới
                         $variant = $product->variants()->create([
                             'sku' => $variantData['sku'],
                             'price' => $variantData['price'],
