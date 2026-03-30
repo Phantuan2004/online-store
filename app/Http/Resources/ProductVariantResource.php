@@ -23,6 +23,9 @@ class ProductVariantResource extends JsonResource
             'sku' => $this->sku,
             'price' => $this->price,
             'stock' => $this->stock,
+            'image' => $this->whenLoaded('image', function() {
+                return $this->image ? $this->image->url : null;
+            }),
             'attributes' => empty($attributes) ? null : (object) $attributes,
         ];
     }

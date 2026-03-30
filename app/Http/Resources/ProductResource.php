@@ -40,6 +40,12 @@ class ProductResource extends JsonResource
             'description' => $this->description,
             'price' => $this->price,
             'category_id' => $this->category_id,
+            'primary_image' => $this->whenLoaded('image', function() {
+                return $this->image ? $this->image->url : null;
+            }),
+            'images' => $this->whenLoaded('images', function() {
+                return $this->images->pluck('url');
+            }),
             'attributes' => empty($formattedAttributes) ? null : $formattedAttributes,
             'variants' => ProductVariantResource::collection($this->whenLoaded('variants')),
         ];

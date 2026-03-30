@@ -18,6 +18,8 @@ class UpdateProductRequest extends FormRequest
             'description' => ['nullable', 'string'],
             'price' => ['sometimes', 'numeric', 'min:0'],
             'category_id' => ['sometimes', 'exists:categories,id'],
+            'images' => ['nullable', 'array'],
+            'images.*' => ['string', 'url'],
             // Updates to variants can be complex, for simplicity we might just re-sync or only allow basic product updates
             // Depending on requirements, full variant update logic might be needed.
             'variants' => ['sometimes', 'array'],
@@ -25,6 +27,7 @@ class UpdateProductRequest extends FormRequest
             'variants.*.sku' => ['required_with:variants', 'string'],
             'variants.*.price' => ['required_with:variants', 'numeric', 'min:0'],
             'variants.*.stock' => ['required_with:variants', 'integer', 'min:0'],
+            'variants.*.image' => ['nullable', 'string', 'url'],
             'variants.*.attribute_value_ids' => ['nullable', 'array'],
             'variants.*.attribute_value_ids.*' => ['exists:attribute_values,id'],
         ];
