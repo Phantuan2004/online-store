@@ -47,6 +47,12 @@ Route::middleware('auth:sanctum')->group(function () {
     
     Route::get('user/profile', [UserController::class, 'profile']);
     Route::put('user/profile', [UserController::class, 'updateProfile']);
+    
+    // Auth + Admin required routes
+    Route::middleware('is_admin')->group(function () {
+        Route::get('users', [UserController::class, 'index']);
+        Route::get('users/{user}', [UserController::class, 'show']);
+    });
 
     // Payments (Auth Required to initiate)
     Route::post('payments', [PaymentController::class, 'createPayment']);
