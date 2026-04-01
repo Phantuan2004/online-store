@@ -14,9 +14,12 @@ class CreateOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'payment_method' => ['required', 'string', 'in:cod,vnpay,momo,credit_card'],
-            // Add address rules here if needed
-            'address_id' => ['nullable', 'exists:addresses,id']
+            'payment_method' => ['required', 'string', 'in:cod,vnpay'],
+            'address_id' => [
+                'required', 
+                'exists:addresses,id,user_id,' . $this->user()->id
+            ],
+            'notes' => ['nullable', 'string', 'max:500'],
         ];
     }
 }

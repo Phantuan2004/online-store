@@ -32,52 +32,77 @@ class OrderController extends Controller
         return new OrderResource($order);
     }
 
-    public function store(CreateOrderRequest $request)
+    public function store(CreateOrderRequest $request, \App\Services\VNPayService $vnpayService)
     {
-        $cart = Cart::where('user_id', $request->user()->id)->with('items.variant')->first();
+        $cart = Cart::where('user_id', $request->user()->id)->with('items.variant.product')->first();
 
         if (!$cart || $cart->items->isEmpty()) {
-            return response()->json(['message' => 'Cart is empty'], 400);
+            return response()->json(['message' => 'Giỏ hàng của bạn đang trống.'], 400);
         }
 
-        return DB::transaction(function () use ($request, $cart) {
-            $totalPrice = $cart->items->sum(function ($item) {
-                return $item->variant->price * $item->quantity;
-            });
+        try {
+            return DB::transaction(function () use ($request, $cart, $vnpayService) {
+                // 1. Tính tổng tiền
+                $totalPrice = $cart->items->sum(function ($item) {
+                    return $item->variant->price * $item->quantity;
+                });
 
-            $order = Order::create([
-                'user_id' => $request->user()->id,
-                'total_price' => $totalPrice,
-                'status' => 'pending',
-            ]);
-
-            foreach ($cart->items as $item) {
-                $order->items()->create([
-                    'product_variant_id' => $item->product_variant_id,
-                    'quantity' => $item->quantity,
-                    'price' => $item->variant->price,
+                // 2. Tạo Đơn hàng (Trạng thái mặc định: pending)
+                $order = Order::create([
+                    'user_id' => $request->user()->id,
+                    'total_price' => $totalPrice,
+                    'status' => 'pending',
                 ]);
 
-                // Decrease stock
-                $item->variant->decrement('stock', $item->quantity);
-            }
+                // 3. Chuyển Cart Items sang Order Items & Cập nhật tồn kho
+                foreach ($cart->items as $item) {
+                    // Kiểm tra tồn kho trước khi trừ
+                    if ($item->quantity > $item->variant->stock) {
+                        throw new \Exception("Sản phẩm '" . $item->variant->product->name . "' hiện không đủ số lượng tồn kho.");
+                    }
 
-            // Optional: attach address if provided via address_id
-            if ($request->has('address_id')) {
+                    $order->items()->create([
+                        'product_variant_id' => $item->product_variant_id,
+                        'quantity' => $item->quantity,
+                        'price' => $item->variant->price, // Snapshot giá hiện tại
+                    ]);
+
+                    // Trừ số lượng trong kho
+                    $item->variant->decrement('stock', $item->quantity);
+                }
+
+                // 4. Lưu địa chỉ giao hàng
                 $order->addresses()->attach($request->validated('address_id'));
-            }
 
-            // Create pending payment record
-            $order->payment()->create([
-                'method' => $request->validated('payment_method'),
-                'status' => 'pending',
-            ]);
+                // 5. Khởi tạo bản ghi Payment
+                $paymentMethod = $request->validated('payment_method');
+                $order->payment()->create([
+                    'method' => $paymentMethod,
+                    'status' => 'pending',
+                ]);
 
-            // Clear cart
-            $cart->items()->delete();
+                // 6. Xóa giỏ hàng sau khi đặt hàng thành công
+                $cart->items()->delete();
 
-            $order->load(['items.variant.product', 'payment']);
-            return new OrderResource($order);
-        });
+                $order->load(['items.variant.product', 'payment']);
+                $resource = new OrderResource($order);
+
+                // 7. Xử lý logic VNPay: Sinh URL thanh toán nếu chọn vnpay
+                if ($paymentMethod === 'vnpay') {
+                    $paymentUrl = $vnpayService->createPaymentUrl($order);
+                    return $resource->additional([
+                        'message' => 'Đơn hàng đã được khởi tạo, vui lòng thanh toán qua VNPay.',
+                        'payment_url' => $paymentUrl
+                    ]);
+                }
+
+                return $resource->additional(['message' => 'Đặt hàng thành công (COD).']);
+            });
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Đã xảy ra lỗi khi xử lý đơn hàng.',
+                'errors' => ['checkout' => [$e->getMessage()]]
+            ], 422);
+        }
     }
 }
