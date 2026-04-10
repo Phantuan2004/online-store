@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\AddressController;
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
 Route::post('refresh', [AuthController::class, 'refresh']);
+Route::post('logout', [AuthController::class, 'logout']);
 
 // Products (Public View)
 Route::apiResource('products', ProductController::class)->only(['index', 'show']);
@@ -45,7 +46,6 @@ Route::post('payments/callback', [PaymentController::class, 'handleCallback']);
 Route::middleware('auth:sanctum')->group(function () {
 
     // Auth & User Profile
-    Route::post('logout', [AuthController::class, 'logout']);
     Route::get('me', [AuthController::class, 'me']);
     
     Route::get('user/profile', [UserController::class, 'profile']);

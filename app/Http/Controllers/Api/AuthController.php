@@ -82,7 +82,7 @@ class AuthController extends Controller
             'refresh_token',
             $refreshToken->plainTextToken,
             43200, // 30 ngày tính bằng phút
-            null,
+            '/',
             null,
             false, // secure - đổi thành true khi đưa lên môi trường https
             true,  // httpOnly
@@ -112,8 +112,8 @@ class AuthController extends Controller
             $user->currentAccessToken()->delete();
         }
 
-        // Xóa cookie Refresh Token
-        $cookie = Cookie::forget('refresh_token');
+        // Xóa cookie Refresh Token bằng cách set thời gian hết hạn trong quá khứ
+        $cookie = cookie('refresh_token', '', -1, '/', null, false, true, false, 'Lax');
 
         return response()->json([
             'message' => 'Đăng xuất thành công'
