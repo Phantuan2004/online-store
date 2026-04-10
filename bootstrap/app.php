@@ -15,6 +15,16 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
+        
+        $middleware->encryptCookies(except: [
+            'refresh_token',
+        ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'api/refresh',
+            'api/login',
+        ]);
+
         $middleware->alias([
             'is_admin' => \App\Http\Middleware\IsAdmin::class,
         ]);
