@@ -14,7 +14,7 @@ class ProductController extends Controller
 {
     public function index()
     {
-        $products = Product::with(['images', 'image', 'variants.image', 'variants.attributeValues.attribute', 'category'])->paginate(15);
+        $products = Product::with(['images', 'image', 'variants.image', 'variants.attributeValues.attribute', 'category'])->paginate(12);
         return ProductResource::collection($products);
     }
 
