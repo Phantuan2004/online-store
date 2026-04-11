@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\AttributeValueController;
 use App\Http\Controllers\Api\AddressController;
+use App\Http\Controllers\Api\CategoryController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -31,6 +33,11 @@ Route::post('logout', [AuthController::class, 'logout']);
 
 // Products (Public View)
 Route::apiResource('products', ProductController::class)->only(['index', 'show']);
+
+// Categories (Public View)
+Route::get('categories', [CategoryController::class, 'index']);
+Route::get('categories/{category}', [CategoryController::class, 'show']);
+
 
 // Attributes (Public View)
 Route::get('attributes', [AttributeController::class, 'index']);
@@ -67,7 +74,13 @@ Route::middleware('auth:sanctum')->group(function () {
         // Attribute Values Management
         Route::post('attributes/{attribute}/values', [AttributeValueController::class, 'store']);
         Route::delete('attribute-values/{attributeValue}', [AttributeValueController::class, 'destroy']);
+
+        // Categories Management (Admin)
+        Route::post('categories', [CategoryController::class, 'store']);
+        Route::put('categories/{category}', [CategoryController::class, 'update']);
+        Route::delete('categories/{category}', [CategoryController::class, 'destroy']);
     });
+
 
     // Payments (Auth Required to initiate)
     Route::post('payments', [PaymentController::class, 'createPayment']);
