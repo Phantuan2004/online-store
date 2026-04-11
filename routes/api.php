@@ -43,8 +43,8 @@ Route::get('categories/{category}', [CategoryController::class, 'show']);
 Route::get('attributes', [AttributeController::class, 'index']);
 Route::get('attributes/{attribute}', [AttributeController::class, 'show']);
 
-// Payments Callback (Public for Gateway)
-Route::post('payments/callback', [PaymentController::class, 'handleCallback']);
+// Payments Callback (Public for Gateway: Accepts both GET for Redirect and POST for IPN)
+Route::match(['get', 'post'], 'payments/callback', [PaymentController::class, 'handleCallback']);
 
 
 // ==========================================

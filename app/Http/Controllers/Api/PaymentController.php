@@ -29,10 +29,8 @@ class PaymentController extends Controller
 
     public function handleCallback(Request $request)
     {
-        // VNPay trả về các tham số qua Query String (GET) hoặc POST tùy cấu hình
-        // Ở đây chúng ta lấy vnp_ResponseCode để kiểm tra trạng thái
         $vnp_ResponseCode = $request->input('vnp_ResponseCode');
-        $vnp_TxnRef = $request->input('vnp_TxnRef'); // Chính là Order ID chúng ta đã gửi đi
+        $vnp_TxnRef = $request->input('vnp_TxnRef'); // Order ID
 
         $order = Order::with('payment')->find($vnp_TxnRef);
 
@@ -40,7 +38,9 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Không tìm thấy đơn hàng.'], 404);
         }
 
-        if ($vnp_ResponseCode === '00') {
+        $isSuccess = ($vnp_ResponseCode === '00');
+
+        if ($isSuccess) {
             DB::transaction(function () use ($order) {
                 $order->update(['status' => 'paid']);
                 $order->payment()->update([
@@ -48,19 +48,21 @@ class PaymentController extends Controller
                     'paid_at' => now(),
                 ]);
             });
-
-            return response()->json([
-                'message' => 'Thanh toán qua VNPay thành công.',
-                'order_id' => $order->id
-            ]);
+        } else {
+            $order->payment()->update(['status' => 'failed']);
         }
 
-        // Các mã lỗi khác của VNPay (ví dụ: 24 là khách hàng hủy giao dịch)
-        $order->payment()->update(['status' => 'failed']);
-        
+        // Chuyển hướng về Frontend nếu là yêu cầu từ Browser (GET)
+        // Nếu là IPN (thường là Server-to-Server), trả về JSON
+        if ($request->isMethod('GET')) {
+            $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
+            $status = $isSuccess ? 'success' : 'failed';
+            return redirect()->to("{$frontendUrl}/profile?payment_status={$status}&order_id={$order->id}");
+        }
+
         return response()->json([
-            'message' => 'Giao dịch không thành công hoặc đã bị hủy.',
-            'vnp_ResponseCode' => $vnp_ResponseCode
-        ], 400);
+            'RspCode' => $isSuccess ? '00' : '01',
+            'Message' => $isSuccess ? 'Confirm Success' : 'Confirm Error'
+        ]);
     }
 }
