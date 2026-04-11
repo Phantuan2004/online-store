@@ -39,7 +39,7 @@ class OrderController extends Controller
             abort(403);
         }
 
-        $order->load(['items.variant.product', 'payment', 'addresses']);
+        $order->load(['items.variant.product.image', 'items.variant.image', 'payment', 'addresses']);
         return new OrderResource($order);
     }
 

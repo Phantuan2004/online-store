@@ -14,6 +14,7 @@ class OrderItemResource extends JsonResource
             'quantity' => $this->quantity,
             'price' => $this->price,
             'product_name' => $this->variant->product->name ?? null,
+            'product_image' => ($this->variant->image->url ?? ($this->variant->product->image->url ?? null)),
             'sku' => $this->variant->sku ?? null,
             'variant' => new ProductVariantResource($this->whenLoaded('variant')),
         ];
