@@ -17,10 +17,7 @@ class CategoryController extends Controller
      */
     public function index(): JsonResponse
     {
-        // Fetch all categories. If you want a tree structure, you can fetch top-level only:
-        // $categories = Category::whereNull('parent_id')->with('children')->get();
-        
-        $categories = Category::with(['children', 'parent'])->get();
+        $categories = Category::with(['children', 'parent'])->withCount('products')->get();
 
         return response()->json([
             'success' => true,

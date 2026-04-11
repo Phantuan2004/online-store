@@ -40,6 +40,12 @@ class ProductResource extends JsonResource
             'description' => $this->description,
             'price' => $this->price,
             'category_id' => $this->category_id,
+            'category' => $this->whenLoaded('category', function() {
+                return [
+                    'id' => $this->category->id,
+                    'name' => $this->category->name,
+                ];
+            }),
             'primary_image' => $this->whenLoaded('image', function() {
                 return $this->image ? $this->image->url : null;
             }),
