@@ -16,7 +16,7 @@ class CartController extends Controller
     public function getCart(Request $request)
     {
         $cart = Cart::firstOrCreate(['user_id' => $request->user()->id]);
-        $cart->load(['items.variant.product', 'items.variant.attributeValues.attribute']);
+        $cart->load(['items.variant.product.image', 'items.variant.image', 'items.variant.attributeValues.attribute']);
 
         return new CartResource($cart);
     }
@@ -51,7 +51,7 @@ class CartController extends Controller
             ]);
         }
 
-        $cart->load(['items.variant.product', 'items.variant.attributeValues.attribute']);
+        $cart->load(['items.variant.product.image', 'items.variant.image', 'items.variant.attributeValues.attribute']);
         return new CartResource($cart);
     }
 
