@@ -77,36 +77,32 @@ class AuthController extends Controller
         // 1. Tạo Access Token (Ngắn hạn - 30 phút) - luôn cấp
         $accessToken = $user->createToken('access_token', ['*'], now()->addMinutes(30));
 
+        // 2. Luôn cấp Refresh Token — remember_me chỉ quyết định thời hạn
+        $refreshExpiry = $rememberMe ? now()->addDays(30) : now()->addHours(24);
+        $cookieMinutes = $rememberMe ? 43200 : 1440; // 30 ngày hoặc 24 giờ
+
+        $refreshToken = $user->createToken('refresh_token', ['refresh'], $refreshExpiry);
+
+        $cookie = cookie(
+            'refresh_token',
+            $refreshToken->plainTextToken,
+            $cookieMinutes,
+            '/',
+            null,
+            false, // secure - đổi thành true khi đưa lên môi trường https
+            true,  // httpOnly
+            false, // raw
+            'Lax'  // sameSite
+        );
+
         $responseData = [
-            'user'         => $user,
+            'user' => $user,
             'access_token' => $accessToken->plainTextToken,
-            'token_type'   => 'Bearer',
-            'expires_in'   => 30 * 60, // 30 phút tính bằng giây
+            'token_type' => 'Bearer',
+            'expires_in' => 30 * 60, // 30 phút tính bằng giây
         ];
 
-        if ($rememberMe) {
-            // 2. Chỉ cấp Refresh Token (Dài hạn - 30 ngày) khi remember_me = true
-            $refreshToken = $user->createToken('refresh_token', ['refresh'], now()->addDays(30));
-
-            $cookie = cookie(
-                'refresh_token',
-                $refreshToken->plainTextToken,
-                43200, // 30 ngày tính bằng phút
-                '/',
-                null,
-                false, // secure - đổi thành true khi đưa lên môi trường https
-                true,  // httpOnly
-                false, // raw
-                'Lax'  // sameSite
-            );
-
-            return response()->json($responseData, $status)->withCookie($cookie);
-        }
-
-        // Không remember: xóa refresh token cookie cũ nếu có (trường hợp re-login)
-        $clearCookie = cookie('refresh_token', '', -1, '/', null, false, true, false, 'Lax');
-
-        return response()->json($responseData, $status)->withCookie($clearCookie);
+        return response()->json($responseData, $status)->withCookie($cookie);
     }
 
     public function me()
