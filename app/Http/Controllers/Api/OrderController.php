@@ -160,6 +160,10 @@ class OrderController extends Controller
                             'status' => 'paid',
                             'paid_at' => now(),
                         ]),
+                        'completed' => ($order->payment->method === 'cod') ? $order->payment->update([
+                            'status' => 'paid',
+                            'paid_at' => now(),
+                        ]) : null,
                         'cancelled' => $order->payment->update([
                             'status' => 'failed',
                         ]),
