@@ -25,11 +25,12 @@ class UserController extends Controller
 
         $request->validate([
             'name' => 'sometimes|string|max:255',
+            'phone' => 'sometimes|string|max:255',
             'password' => 'sometimes|string|min:8',
             'avatar' => 'nullable|string|url',
         ]);
 
-        $data = $request->only('name');
+        $data = $request->only(['name', 'phone']);
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
@@ -92,6 +93,7 @@ class UserController extends Controller
     {
         $request->validate([
             'name' => 'sometimes|string|max:255',
+            'phone' => 'sometimes|string|max:255',
             'email' => ['sometimes', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'password' => 'sometimes|string|min:8',
             'role' => ['sometimes', Rule::in(['admin', 'user'])],
@@ -117,3 +119,5 @@ class UserController extends Controller
         return response()->json(null, 204);
     }
 }
+
+
