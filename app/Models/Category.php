@@ -8,10 +8,20 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'parent_id'])]
+#[Fillable(['name', 'slug', 'parent_id'])]
 class Category extends Model
 {
     use HasFactory;
+    
+    protected static function boot()
+    {
+        parent::boot();
+        static::saving(function ($category) {
+            if (empty($category->slug)) {
+                $category->slug = \Illuminate\Support\Str::slug($category->name);
+            }
+        });
+    }
 
     public function parent(): BelongsTo
     {
