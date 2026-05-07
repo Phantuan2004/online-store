@@ -107,7 +107,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('orders/{order}/cancel', [OrderController::class, 'cancel']);
 
     // Orders Management (Admin)
-    Route::middleware('is_admin')->group(function () {
+    Route::middleware('is_admin')->prefix('admin')->group(function () {
         Route::put('orders/{order}', [OrderController::class, 'update']);
         Route::get('orders', [OrderController::class, 'adminIndex']);
         Route::get('orders/{order}', [OrderController::class, 'adminShow']);
