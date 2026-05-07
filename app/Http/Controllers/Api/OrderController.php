@@ -34,6 +34,33 @@ class OrderController extends Controller
         return OrderResource::collection($orders);
     }
 
+    /**
+     * Danh sách tất cả đơn hàng (Admin).
+     */
+    public function adminIndex(Request $request)
+    {
+        $query = Order::with(['user', 'items.variant.product', 'payment', 'addresses']);
+
+        // Lọc theo trạng thái (status)
+        if ($request->has('status')) {
+            $status = $request->get('status');
+            if ($status === 'active') {
+                $query->whereIn('status', ['pending', 'paid', 'shipped']);
+            } else {
+                $query->where('status', $status);
+            }
+        }
+
+        // Lọc theo User ID
+        if ($request->has('user_id')) {
+            $query->where('user_id', $request->get('user_id'));
+        }
+
+        $orders = $query->latest()->paginate(10);
+            
+        return OrderResource::collection($orders);
+    }
+
     public function show(Request $request, Order $order)
     {
         if ($order->user_id !== $request->user()->id) {
@@ -41,6 +68,15 @@ class OrderController extends Controller
         }
 
         $order->load(['items.variant.product.image', 'items.variant.image', 'payment', 'addresses']);
+        return new OrderResource($order);
+    }
+
+    /**
+     * Chi tiết đơn hàng bất kỳ (Admin).
+     */
+    public function adminShow(Order $order)
+    {
+        $order->load(['user', 'items.variant.product.image', 'items.variant.image', 'payment', 'addresses']);
         return new OrderResource($order);
     }
 

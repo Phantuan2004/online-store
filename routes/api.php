@@ -54,23 +54,23 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Auth & User Profile
     Route::get('me', [AuthController::class, 'me']);
-    
+
     Route::get('user/profile', [UserController::class, 'profile']);
     Route::put('user/profile', [UserController::class, 'updateProfile']);
-    
+
     // Addresses
     Route::apiResource('addresses', AddressController::class);
-    
+
     // Auth + Admin required routes
     Route::middleware('is_admin')->group(function () {
         Route::get('users', [UserController::class, 'index']);
         Route::get('users/{user}', [UserController::class, 'show']);
-        
+
         // Attributes Management (Admin only, no prefix)
         Route::post('attributes', [AttributeController::class, 'store']);
         Route::put('attributes/{attribute}', [AttributeController::class, 'update']);
         Route::delete('attributes/{attribute}', [AttributeController::class, 'destroy']);
-        
+
         // Attribute Values Management
         Route::post('attributes/{attribute}/values', [AttributeValueController::class, 'store']);
         Route::delete('attribute-values/{attributeValue}', [AttributeValueController::class, 'destroy']);
@@ -88,7 +88,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Admin Routes
     Route::prefix('admin')->middleware('is_admin')->group(function () {
         Route::apiResource('users', UserController::class);
-        
+
         // Admin Product Management
         Route::apiResource('products', ProductController::class)->except(['index', 'show']);
     });
@@ -109,6 +109,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Orders Management (Admin)
     Route::middleware('is_admin')->group(function () {
         Route::put('orders/{order}', [OrderController::class, 'update']);
+        Route::get('orders', [OrderController::class, 'adminIndex']);
+        Route::get('orders/{order}', [OrderController::class, 'adminShow']);
     });
 
     // Reviews (Nested Routes)
